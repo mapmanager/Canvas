@@ -277,14 +277,14 @@ class canvasApp(QtWidgets.QMainWindow):
             #    os.mkdir(videoFolderPath)
 
             # finally, make the canvas
-            newCanvas = canvas.interface.canvasWidget(filePath, self, isNew=True)
+            newCanvasWidget = canvas.interface.canvasWidget(filePath, self, isNew=True)
 
             # TODO: organize turning all motor functions on/off
-            newCanvas.signalMoveTo.connect(self.slot_motorMoveTo)
+            newCanvasWidget.signalMoveTo.connect(self.slot_motorMoveTo)
 
             # add to list
             fileNameNoExt, ext = os.path.splitext(fileName)
-            self.canvasDict[fileNameNoExt] = newCanvas
+            self.canvasDict[fileNameNoExt] = newCanvasWidget
 
             # update menus
             #self.myMenu.buildCanvasMenu(self.canvasDict)
@@ -336,16 +336,16 @@ class canvasApp(QtWidgets.QMainWindow):
 
         if os.path.isfile(filePath):
             # load
-            loadedCanvas = canvas.interface.canvasWidget(filePath, self, isNew=False) #bCanvas(filePath=filePath)
+            loadedCanvasWidget = canvas.interface.canvasWidget(filePath, self, isNew=False) #bCanvas(filePath=filePath)
 
             # TODO: organize turning all motor functions on/off
             # we generally do not want any motor face on load (for analysis)
-            loadedCanvas.signalMoveTo.connect(self.slot_motorMoveTo)
+            loadedCanvasWidget.signalMoveTo.connect(self.slot_motorMoveTo)
 
             # keep track of loaded canvas widget
             basename = os.path.split(filePath)[1]
             basename = os.path.splitext(basename)[0]
-            self.canvasDict[basename] = loadedCanvas
+            self.canvasDict[basename] = loadedCanvasWidget
 
             # now handled in bMenu when user clicks menu
             #self.myMenu.buildCanvasMenu(self.canvasDict)
@@ -356,7 +356,14 @@ class canvasApp(QtWidgets.QMainWindow):
 
     def slot_motorMoveTo(self, moveDict : dict):
         logger.info(moveDict)
-    
+        xMotorPos = moveDict['xMotorPos']
+        yMotorPos = moveDict['yMotorPos']
+        
+        thePos = self.xyzMotor.moveto(x=xMotorPos, y=yMotorPos) # the pos is (x,y)
+
+        # update interface
+        #self.qqq.readMotorPosition()
+
     def slot_UpdateOptions(self, optionsDict :dict):
         """Update all options.
         

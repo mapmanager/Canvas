@@ -185,7 +185,7 @@ class bCanvas:
         
         Args:
             imageData: numpy image
-            videoHeader: dict with (motor, um widht/height, date/time)
+            videoHeader: dict with (motor, um width/height, date/time)
 
         Return:
             newVideoStack: canvas.canvasStack
@@ -203,9 +203,9 @@ class bCanvas:
         saveVideoFile = 'v' + self.enclosingFolder + '_' + fileNumStr + '.tif'
         saveVideoPath = os.path.join(self.videoFolderPath, saveVideoFile)
 
-        print('2222 SAVING with videoHeader')
-        print('  ', imageData.shape)
-        pprint(videoHeader)
+        # print('2222 SAVING with videoHeader')
+        # print('  ', imageData.shape)
+        # pprint(videoHeader)
 
         # save stack
         canvas.canvasStackUtil.imsave(saveVideoPath, imageData, tifHeader=videoHeader)
@@ -253,6 +253,9 @@ class bCanvas:
         Args:
             newStack:
             canvasStackType: in ('scanning', 'video')
+
+        Return:
+            xxx
         """
         fileName = newStack.getFileName()
         if stackType == canvasStackType.video:

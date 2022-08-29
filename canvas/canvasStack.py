@@ -146,7 +146,7 @@ class canvasStack:
     def bitDepth(self):
         return self.header.bitDepth
 
-    def getHeaderVal2(self, key):
+    def old_getHeaderVal2(self, key):
         """
         key(s) are ALWAYS lower case
         """
@@ -160,11 +160,11 @@ class canvasStack:
             return None
 
     def getHeaderVal(self, key):
-        if key in self.header.header.keys():
-            return self.header.header[key]
-        else:
+        key = key.lower()
+        try:
+            return self.header[key]
+        except (KeyError) as e:
             logger.error(f'Did not find key "{key}" in stack header')
-            #. Available keys are:', self.header.header.keys())
             return None
 
     def getPixel(self, channel, sliceNum, x, y):

@@ -191,8 +191,8 @@ class mp285(bMotor):
             logger.info(f'  returning: "{theRet}')
         return theRet
 
-    def moveto(self, direction, umDistance):
-        return self.move(direction, umDistance)
+    # def moveto(self, direction, umDistance):
+    #     return self.move(direction, umDistance)
 
     def move(self, direction, umDistance, openPort=True):
         """

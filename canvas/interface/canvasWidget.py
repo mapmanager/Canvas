@@ -110,7 +110,7 @@ class canvasWidget(QtWidgets.QMainWindow):
         _parentMenu.addSeparator()
 
         # move motor to
-        actionName = 'Move Motor To Position ...'
+        actionName = 'Move To Motor Position ...'
         _action = QtWidgets.QAction(actionName, self)  # self is required !!!
         _action.setDisabled(selectedItem is None)
         _action.triggered.connect(lambda enabled, name=actionName: self._contextMenuAction(name, enabled))
@@ -128,10 +128,29 @@ class canvasWidget(QtWidgets.QMainWindow):
             self.getGraphicsView().changeOrder('bring to front')
         elif actionName == 'Move Backward ...':
             self.getGraphicsView().changeOrder('send to back')
-        elif actionName == 'Move Motor To Position ...':
-            pass
+        elif actionName == 'Move To Motor Position ...':
+            self._moveToPosition()
         else:
             logger.warning(f'Case not taken: {actionName}')
+
+    def _moveToPosition(self):
+        """Move to position of selected item.
+        """
+        selectedItem = self.myGraphicsView.getSelectedItem()
+        if selectedItem is None:
+            return
+        _pos = selectedItem.pos()
+        xPos = _pos.x()
+        yPos = _pos.y()
+        moveToDict = {
+            'filename': selectedItem.getFileName(),
+            'xMotorPos': xPos,
+            'yMotorPos': yPos,
+        }
+        self.signalMoveTo.emit(moveToDict)
+
+        # update red square position
+        self.readMotorPosition()
 
     @property
     def appOptions(self):
@@ -162,15 +181,13 @@ class canvasWidget(QtWidgets.QMainWindow):
         left = self.frameGeometry().left()
         top = self.frameGeometry().top()
 
-        #logger.info(f'{left} {top}')
-
         self.myCanvas.setWindowPosition('left', left)
         self.myCanvas.setWindowPosition('top', top)
 
         super().moveEvent(event)
 
     def resizeEvent(self, event):
-        """Inherited method when user resizes window.
+        """Inherited method called when user resizes window.
         """
         width = self.width()
         height = self.height()
@@ -182,7 +199,7 @@ class canvasWidget(QtWidgets.QMainWindow):
         super().resizeEvent(event)
 
     def closeEvent(self, event):
-        """Inherited method when user closes window.
+        """Inherited method called when user closes window.
         """
 
         # ask user if it is ok
@@ -293,7 +310,7 @@ class canvasWidget(QtWidgets.QMainWindow):
             logger.error('  got empty imageData -->> aborting')
             return
 
-        logger.info(f'  shape:{imageData.shape}')
+        logger.info(f'  shape:{imageData.shape}')  # (planes, y,x)
         logger.info(f'  dtype:{imageData.dtype}')
 
         # reduce 3d to 2d
@@ -303,7 +320,7 @@ class canvasWidget(QtWidgets.QMainWindow):
             # assume last axis is r/g/b planes
             logger.info(f'  imageData has 3 planes, just using first')
             imageData = imageData[:,:,0]
-        xPixels, yPixels = imageData.shape
+        yPixels, xPixels = imageData.shape  # (y,x) swapped
 
         # get the current motor position
         xMotor, yMotor, zMotor = self.readMotorPosition()
@@ -728,7 +745,7 @@ class myQGraphicsView(QtWidgets.QGraphicsView):
         itemStack = itemStack.old_getImage_ContrastEnhanced(theMin, theMax,
                                         useMaxProject=useMaxProject)
 
-        imageStackHeight, imageStackWidth = itemStack.shape
+        imageStackHeight, imageStackWidth = itemStack.shape  # (y,x)
 
         myQImage = QtGui.QImage(itemStack, imageStackWidth, imageStackHeight,
                                 QtGui.QImage.Format_Indexed8)

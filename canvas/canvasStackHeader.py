@@ -98,12 +98,14 @@ class canvasStackHeader:
             self.loadHeader()
 
     def __getitem__(self, key):
+        key = key.lower()
         try:
             return self.header[key]
         except (KeyError) as e:
             logger.error(f'Did not find key "{key}" in header.')
 
     def __setitem__(self, key, value):
+        key = key.lower()
         try:
             self.header[key] = value
         except (KeyError) as e:
@@ -144,56 +146,56 @@ class canvasStackHeader:
 
     @property
     def fileName(self):
-        return os.path.basename(self.header['path'])
+        return os.path.basename(self['path'])
     @property
     def stackType(self):
-        return self.header['stackType']
+        return self['stackType']
     @property
     def numChannels(self):
-        return self.header['numChannels']
+        return self['numChannels']
     @property
     def numImages(self):
-        return self.header['numImages']
+        return self['numImages']
     @property
     def numFrames(self):
-        return self.header['numFrames']
+        return self['numFrames']
     @property
     def pixelsPerLine(self):
-        return self.header['xPixels']
+        return self['xPixels']
     @property
     def linesPerFrame(self):
-        return self.header['yPixels']
+        return self['yPixels']
     @property
     def xVoxel(self):
-        return self.header['xVoxel']
+        return self['xVoxel']
     @property
     def yVoxel(self):
-        return self.header['yVoxel']
+        return self['yVoxel']
     @property
     def zVoxel(self):
-        return self.header['zVoxel']
+        return self['zVoxel']
     @property
     def zoom(self):
-        return self.header['zoom']
+        return self['zoom']
     @property
     def umWidth(self):
-        return self.header['umWidth']
+        return self['umWidth']
     @property
     def umHeight(self):
-        return self.header['umHeight']
+        return self['umHeight']
     @property
     def xMotor(self):
-        return self.header['xMotor']
+        return self['xMotor']
     @property
     def yMotor(self):
-        return self.header['yMotor']
+        return self['yMotor']
     @property
     def bitDepth(self):
         # get rid of this 'if', I am switching everything to use 'bitDepth'
-        if 'bitDepth' in self.header.keys():
-            bitDepth = self.header['bitDepth']
-        elif 'bitsPerPixel' in self.header.keys():
-            bitDepth = self.header['bitsPerPixel']
+        if 'bitdepth' in self.header.keys():
+            bitDepth = self.header['bitdepth']
+        elif 'bitsperpixel' in self.header.keys():
+            bitDepth = self.header['bitsperpixel']
         if type(bitDepth) == str:
             # todo: put this back in
             #print('   error: bStackHeader.bitDepth @property found str bitDepth/bitsperpixel: ""', bitDepth, '"', self.path)
@@ -201,7 +203,7 @@ class canvasStackHeader:
         if bitDepth is None or bitDepth=='':
             # todo: put this back in
             #print('   error: bStackHeader.bitDepth @property got bad (None or "") bitDepth:', bitDepth, 'returning 8, path:', self.path)
-            logger.warning('did not find header bitDepth, defaulting to 8')
+            logger.warning('did not find header "bitdepth", defaulting to 8')
             bitDepth = 8
         #print('type(bitDepth):', type(bitDepth), bitDepth, self.path)
         return bitDepth
@@ -287,66 +289,76 @@ class canvasStackHeader:
             numImages = len(tif.pages)
 
             tag = tif.pages[0].tags['ImageWidth']
-            xPixels = tag.value
+            xPixels = tag.value  # swapped
             tag = tif.pages[0].tags['ImageLength']
-            yPixels = tag.value
+            yPixels = tag.value  # swapped
 
             # umWidth = yPixels * yVoxel
             # umHeight = xPixels * xVoxel
 
-        self.header['stackType'] = 'Tiff'
+        self['stackType'] = 'Tiff'
 
-        self.header['xPixels'] = xPixels
-        self.header['yPixels'] = yPixels
-        self.header['numChannels'] = numChannels
-        self.header['numImages'] = numImages
-        self.header['numFrames'] = None
+        self['xPixels'] = xPixels
+        self['yPixels'] = yPixels
+        self['numChannels'] = numChannels
+        self['numImages'] = numImages
+        self['numFrames'] = None
         #
         logger.info(f'  got xVoxel:{xVoxel} yVoxel:{yVoxel}')
-        self.header['xVoxel'] = xVoxel # um/pixel
-        self.header['yVoxel'] = yVoxel
-        self.header['zVoxel'] = zVoxel
+        self['xVoxel'] = xVoxel # um/pixel
+        self['yVoxel'] = yVoxel
+        self['zVoxel'] = zVoxel
         
         if imagej_metadata is not None:
+            for k,v in imagej_metadata.items():
+                self[k] = v
+            '''
             if 'bitdepth' in imagej_metadata.keys():
-                self.header['bitDepth'] = imagej_metadata['bitdepth']
+                self['bitDepth'] = imagej_metadata['bitdepth']
 
             if 'xmotor' in imagej_metadata.keys():
-                self.header['xMotor'] = imagej_metadata['xmotor']
+                self['xMotor'] = imagej_metadata['xmotor']
             if 'ymotor' in imagej_metadata.keys():
-                self.header['yMotor'] = imagej_metadata['ymotor']
+                self['yMotor'] = imagej_metadata['ymotor']
             if 'zmotor' in imagej_metadata.keys():
-                self.header['zMotor'] = imagej_metadata['zmotor']
+                self['zMotor'] = imagej_metadata['zmotor']
                 
             # if 'xpixels' in imagej_metadata.keys():
-            #     self.header['xPixels'] = imagej_metadata['xpixels']
+            #     self['xPixels'] = imagej_metadata['xpixels']
             # if 'ypixels' in imagej_metadata.keys():
-            #     self.header['yPixels'] = imagej_metadata['ypixels']
+            #     self['yPixels'] = imagej_metadata['ypixels']
             # if 'zpixels' in imagej_metadata.keys():
-            #     self.header['zMotor'] = imagej_metadata['zmotor']
+            #     self['zMotor'] = imagej_metadata['zmotor']
 
             if 'date' in imagej_metadata.keys():
-                self.header['date'] = imagej_metadata['date']
+                self['date'] = imagej_metadata['date']
             if 'time' in imagej_metadata.keys():
-                self.header['time'] = imagej_metadata['time']
+                self['time'] = imagej_metadata['time']
             if 'seconds' in imagej_metadata.keys():
-                self.header['seconds'] = imagej_metadata['seconds']
+                self['seconds'] = imagej_metadata['seconds']
+            '''
+
+        # assign meaningfull um width/height
+        # acquired video should alread have this
+
+        logger.info(f"self['umWidth'] is {self['umWidth']}")
+        logger.info(f"self['umHeight'] is {self['umHeight']}")
 
         if xPixels is not None and xVoxel is not None:
-            self.header['umWidth'] = xPixels * xVoxel
+            self['umWidth'] = xPixels * xVoxel
         else:
-            self.header['umWidth'] = None
+            self['umWidth'] = None
 
         if yPixels is not None and yVoxel is not None:
-            self.header['umHeight'] = yPixels * yVoxel
+            self['umHeight'] = yPixels * yVoxel
         else:
-            self.header['umHeight'] = None
+            self['umHeight'] = None
 
         if isScanImage:
             # sets numChannels
             self.loadScanImageHeader()
 
-        logger.info('=== header is')
+        logger.info('=== loaded header is')
         self.print()
 
     def loadScanImageHeader(self):
@@ -356,7 +368,7 @@ class canvasStackHeader:
             if not isScanImage:
                 logger.error(f'is not a ScanImage file: {self.path}')
             else:
-                self.header['stackType'] = 'ScanImage'
+                self['stackType'] = 'ScanImage'
                 
                 scanimage_metadata = f.scanimage_metadata
                 # print('  scanimage_metadata:')
@@ -369,12 +381,12 @@ class canvasStackHeader:
                 k2 = 'SI.VERSION_MAJOR'
                 VERSION_MAJOR = scanimage_metadata['FrameData'][k2]
                 logger.info(f'  SI.VERSION_MAJOR:{VERSION_MAJOR}')
-                self.header['si_VERSION_MAJOR'] = VERSION_MAJOR
+                self['si_VERSION_MAJOR'] = VERSION_MAJOR
 
                 k2 = 'SI.VERSION_MINOR'
                 VERSION_MINOR = scanimage_metadata['FrameData'][k2]
                 logger.info(f'  SI.VERSION_MINOR:{VERSION_MINOR}')
-                self.header['si_VERSION_MINOR'] = VERSION_MINOR
+                self['si_VERSION_MINOR'] = VERSION_MINOR
 
                 k2 = 'SI.hChannels.channelSave' # like [[1], [2]]
                 channelSave = scanimage_metadata['FrameData'][k2]
@@ -384,12 +396,12 @@ class canvasStackHeader:
                     numChannels = 1
                 else:
                     numChannels = len(channelSave)
-                self.header['numChannels'] = numChannels
+                self['numChannels'] = numChannels
 
                 '''
                 k2 = 'SI.hStackManager.numSlices'
                 numSlices = scanimage_metadata['FrameData'][k2]
-                self.header['numImages'] = numChannels
+                self['numImages'] = numChannels
                 '''
 
                 k2 = 'SI.hChannels.channelAdcResolution'
@@ -399,7 +411,7 @@ class canvasStackHeader:
                 logger.info(f'  SI.hChannels.channelAdcResolution:{bitDepth}')
                 logger.warning('   forcing bit depth to 11')
                 bitDepth = 11
-                self.header['bitDepth'] = bitDepth
+                self['bitDepth'] = bitDepth
 
                 #k2 = 'SI.hRoiManager.linesPerFrame'
                 #linesPerFrame = scanimage_metadata['FrameData'][k2]
@@ -410,7 +422,7 @@ class canvasStackHeader:
                 k2 = 'SI.hRoiManager.scanZoomFactor'
                 zoom = scanimage_metadata['FrameData'][k2]
                 logger.info(f'  {k2}:zoom')
-                self.header['zoom'] = zoom
+                self['zoom'] = zoom
 
                 # SI.hMotors.motorPosition: [-186541, -180967, -651565]
                 if VERSION_MAJOR==2021 and VERSION_MINOR==1:
@@ -419,9 +431,9 @@ class canvasStackHeader:
                     k2 = 'SI.hMotors.motorPosition'
                 motorPosition = scanimage_metadata['FrameData'][k2]
                 logger.info(f'  {k2}:{motorPosition}')
-                self.header['xMotor'] = motorPosition[0]
-                self.header['yMotor'] = motorPosition[1]
-                self.header['zMotor'] = motorPosition[2]
+                self['xMotor'] = motorPosition[0]
+                self['yMotor'] = motorPosition[1]
+                self['zMotor'] = motorPosition[2]
 
     def _loadHeaderFromConverted(self, convertedStackHeaderPath):
         """Load header from coverted header .txt file"""
@@ -502,33 +514,33 @@ class canvasStackHeader:
         """
         self.header = {}  # OrderedDict()
 
-        self.header['path'] = self.path # full path to the file
-        self.header['filename'] = '' #added 20191115
-        self.header['date'] = ''
-        self.header['time'] = ''
-        self.header['seconds'] = ''
+        self['path'] = self.path # full path to the file
+        self['filename'] = '' #added 20191115
+        self['date'] = ''
+        self['time'] = ''
+        self['seconds'] = ''
 
-        self.header['stackType'] = None
-        self.header['numChannels'] = None
-        self.header['bitDepth'] = None
+        self['stackType'] = None
+        self['numChannels'] = None
+        self['bitDepth'] = None
 
-        self.header['xPixels'] = None
-        self.header['yPixels'] = None
-        self.header['numImages'] = None
-        self.header['numFrames'] = None
+        self['xPixels'] = None
+        self['yPixels'] = None
+        self['numImages'] = None
+        self['numFrames'] = None
         #
-        self.header['xVoxel'] = 1 # um/pixel
-        self.header['yVoxel'] = 1
-        self.header['zVoxel'] = 1
+        self['xVoxel'] = 1 # um/pixel
+        self['yVoxel'] = 1
+        self['zVoxel'] = 1
 
-        self.header['umWidth'] = None
-        self.header['umHeight'] = None
+        self['umWidth'] = None
+        self['umHeight'] = None
 
-        self.header['xMotor'] = None
-        self.header['yMotor'] = None
-        self.header['zMotor'] = None
+        self['xMotor'] = None
+        self['yMotor'] = None
+        self['zMotor'] = None
 
-        self.header['zoom'] = None # optical zoom of objective
+        self['zoom'] = None # optical zoom of objective
 
         # abb removed 20200915 working on canvas in Baltimore
         # maybe tiff headers should be dynamic based on file type?
@@ -602,16 +614,16 @@ class canvasStackHeader:
         shape = stack.shape
         if len(shape)==2:
             # single plane image
-            #self.header['numChannels'] = shape[0]
-            self.header['numImages'] = 1
-            self.header['xPixels'] = shape[0]
-            self.header['yPixels'] = shape[1]
+            #self['numChannels'] = shape[0]
+            self['numImages'] = 1
+            self['xPixels'] = shape[0]
+            self['yPixels'] = shape[1]
         elif len(shape)==3:
             # 3d image volume
-            #self.header['numChannels'] = shape[0]
-            self.header['numImages'] = shape[0]
-            self.header['xPixels'] = shape[1]
-            self.header['yPixels'] = shape[2]
+            #self['numChannels'] = shape[0]
+            self['numImages'] = shape[0]
+            self['xPixels'] = shape[1]
+            self['yPixels'] = shape[2]
         else:
             print('   error: bStackHeader.assignToShape() got bad shape:', shape)
         #print('self.header:', self.header)
@@ -627,7 +639,7 @@ class canvasStackHeader:
                 bitDepth = 8
             else:
                 bitDepth = 16
-            self.header['bitDepth'] = bitDepth
+            self['bitDepth'] = bitDepth
 
     def readOirHeader(self):
         """
@@ -685,43 +697,43 @@ class canvasStackHeader:
             laserElement = instrumentObject.node.find(_qn(instrumentObject.ns['ome'], "Laser")) # laserElement is a 'xml.etree.ElementTree.Element'
             #print('    laserElement:',type(laserElement))
             if laserElement is not None:
-                self.header['laserWavelength'] = laserElement.get("Wavelength")
+                self['laserWavelength'] = laserElement.get("Wavelength")
 
             # todo: how do i get info from detector 1 and 2 ???
             '''
-            self.header['pmt1_gain'] = omeXml.instrument().Detector.node.get("Gain") #
-            self.header['pmt1_offset'] = omeXml.instrument().Detector.node.get("Offset") #
-            self.header['pmt1_voltage'] = omeXml.instrument().Detector.node.get("Voltage") #
+            self['pmt1_gain'] = omeXml.instrument().Detector.node.get("Gain") #
+            self['pmt1_offset'] = omeXml.instrument().Detector.node.get("Offset") #
+            self['pmt1_voltage'] = omeXml.instrument().Detector.node.get("Voltage") #
             '''
 
             numChannels = omeXml.image().Pixels.channel_count
-            self.header['numChannels'] = numChannels
+            self['numChannels'] = numChannels
 
-            self.header['xPixels'] = omeXml.image().Pixels.SizeX # pixels
-            self.header['yPixels'] = omeXml.image().Pixels.SizeY # pixels
+            self['xPixels'] = omeXml.image().Pixels.SizeX # pixels
+            self['yPixels'] = omeXml.image().Pixels.SizeY # pixels
 
             # todo: this is NOT working
-            #self.header['numImages'] = omeXml.image_count
+            #self['numImages'] = omeXml.image_count
 
-            self.header['numImages'] = omeXml.image().Pixels.SizeZ # number of images
-            self.header['numFrames'] = omeXml.image().Pixels.SizeT # number of images
+            self['numImages'] = omeXml.image().Pixels.SizeZ # number of images
+            self['numFrames'] = omeXml.image().Pixels.SizeT # number of images
 
-            if self.header['numImages'] > 1:
-                #print('--------- tmp setting -------- self.header["stackType"] = "ZStack"')
-                self.header['stackType'] = 'ZStack' #'ZStack'
+            if self['numImages'] > 1:
+                #print('--------- tmp setting -------- self["stackType"] = "ZStack"')
+                self['stackType'] = 'ZStack' #'ZStack'
 
             # swap numFrames into numImages
-            if self.header['numImages'] == 1 and self.header['numFrames'] > 1:
-                self.header['numImages'] = self.header['numFrames']
-                #print('--------- tmp setting -------- self.header["stackType"] = "TSeries"')
-                self.header['stackType'] = 'TSeries'
+            if self['numImages'] == 1 and self['numFrames'] > 1:
+                self['numImages'] = self['numFrames']
+                #print('--------- tmp setting -------- self["stackType"] = "TSeries"')
+                self['stackType'] = 'TSeries'
 
-            self.header['xVoxel'] = omeXml.image().Pixels.PhysicalSizeX # um/pixel
-            self.header['yVoxel'] = omeXml.image().Pixels.PhysicalSizeY
-            self.header['zVoxel'] = omeXml.image().Pixels.PhysicalSizeZ
+            self['xVoxel'] = omeXml.image().Pixels.PhysicalSizeX # um/pixel
+            self['yVoxel'] = omeXml.image().Pixels.PhysicalSizeY
+            self['zVoxel'] = omeXml.image().Pixels.PhysicalSizeZ
 
-            self.header['umWidth'] = self.header['xPixels'] * self.header['xVoxel']
-            self.header['umHeight'] = self.header['yPixels'] * self.header['yVoxel']
+            self['umWidth'] = self['xPixels'] * self['xVoxel']
+            self['umHeight'] = self['yPixels'] * self['yVoxel']
 
             root = xml.etree.ElementTree.fromstring(str(omeXml))
 
@@ -764,46 +776,46 @@ class canvasStackHeader:
                                 if '- Laser Chameleon Vision II transmissivity' in finalKey:
                                     finalValue = finalValue.strip('[')
                                     finalValue = finalValue.strip(']')
-                                    self.header['laserPercent'] = finalValue
+                                    self['laserPercent'] = finalValue
 
                                 if 'general creationDateTime' in finalKey:
                                     theDate, theTime = finalValue.split('T')
-                                    self.header['date'] = theDate
-                                    self.header['time'] = theTime
+                                    self['date'] = theDate
+                                    self['time'] = theTime
 
                                 if 'fileInfomation version #1' in finalKey:
-                                    self.header['olympusFileVersion'] = finalValue
+                                    self['olympusFileVersion'] = finalValue
                                 if 'system systemVersion #1' in finalKey:
-                                    self.header['olympusProgramVersion'] = finalValue
+                                    self['olympusProgramVersion'] = finalValue
 
                                 if 'area zoom' in finalKey:
-                                    self.header['zoom'] = finalValue
+                                    self['zoom'] = finalValue
                                 if 'configuration scannerType' in finalKey:
-                                    self.header['scanner'] = finalValue # in ('Resonant', 'Galvano')
+                                    self['scanner'] = finalValue # in ('Resonant', 'Galvano')
                                 if 'imageDefinition bitCounts' in finalKey:
-                                    self.header['bitDepth'] = int(finalValue)
+                                    self['bitDepth'] = int(finalValue)
 
                                 # channel 1
                                 if 'pmt gain #1' in finalKey:
-                                    self.header['pmtGain1'] = finalValue
+                                    self['pmtGain1'] = finalValue
                                 if 'pmt offset #1' in finalKey:
-                                    self.header['pmtOffset1'] = finalValue
+                                    self['pmtOffset1'] = finalValue
                                 if 'pmt voltage #1' in finalKey:
-                                    self.header['pmtVoltage1'] = finalValue
+                                    self['pmtVoltage1'] = finalValue
                                 # channel 2
                                 if 'pmt gain #2' in finalKey:
-                                    self.header['pmtGain2'] = finalValue
+                                    self['pmtGain2'] = finalValue
                                 if 'pmt offset #2' in finalKey:
-                                    self.header['pmtOffset2'] = finalValue
+                                    self['pmtOffset2'] = finalValue
                                 if 'pmt voltage #2' in finalKey:
-                                    self.header['pmtVoltage2'] = finalValue
+                                    self['pmtVoltage2'] = finalValue
                                 # channel 3
                                 if 'pmt gain #3' in finalKey:
-                                    self.header['pmtGain3'] = finalValue
+                                    self['pmtGain3'] = finalValue
                                 if 'pmt offset #3' in finalKey:
-                                    self.header['pmtOffset3'] = finalValue
+                                    self['pmtOffset3'] = finalValue
                                 if 'pmt voltage #3' in finalKey:
-                                    self.header['pmtVoltage3'] = finalValue
+                                    self['pmtVoltage3'] = finalValue
 
                                 # use #2 for Galvano, and #3 for Resonant
                                 if 'speedInformation pixelSpeed #2' in finalKey:
@@ -819,14 +831,14 @@ class canvasStackHeader:
                                 if 'speedInformation frameSpeed #3' in finalKey:
                                     frameSpeed3 = finalValue
 
-            if self.header['scanner'] == 'Galvano':
-                self.header['pixelSpeed'] = pixelSpeed2
-                self.header['lineSpeed'] = lineSpeed2
-                self.header['frameSpeed'] = frameSpeed2
-            if self.header['scanner'] == 'Resonant':
-                self.header['pixelSpeed'] = pixelSpeed3
-                self.header['lineSpeed'] = lineSpeed3
-                self.header['frameSpeed'] = frameSpeed3
+            if self['scanner'] == 'Galvano':
+                self['pixelSpeed'] = pixelSpeed2
+                self['lineSpeed'] = lineSpeed2
+                self['frameSpeed'] = frameSpeed2
+            if self['scanner'] == 'Resonant':
+                self['pixelSpeed'] = pixelSpeed3
+                self['lineSpeed'] = lineSpeed3
+                self['frameSpeed'] = frameSpeed3
 
         except Exception as e:
             print('EXCEPTION in bStackHeader.readOirHeader()', e)

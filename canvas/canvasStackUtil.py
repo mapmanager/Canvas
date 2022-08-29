@@ -24,18 +24,25 @@ def imsave(path, imageData, tifHeader=None, overwriteExisting=False):
     resolution = (1., 1.)
     metadata = {'spacing':1, 'unit':'pixel'}
 
+    tiffHeader_lower = {}
+    for k,v in tifHeader.items():
+        k = k.lower()
+        tiffHeader_lower[k] = v
+
     if tifHeader is not None:
-        xVoxel = tifHeader['xVoxel']
-        yVoxel = tifHeader['yVoxel']
-        zVoxel = tifHeader['zVoxel']
+        xVoxel = tiffHeader_lower['xvoxel']
+        yVoxel = tiffHeader_lower['yvoxel']
+        zVoxel = tiffHeader_lower['zvoxel']
 
         resolution = (1./xVoxel, 1./yVoxel)
         metadata = {
             'spacing': zVoxel,
-            'unit': tifHeader['unit'], # could be ('micron', 'um', 'pixel')
+            'unit': tiffHeader_lower['unit'], # could be ('micron', 'um', 'pixel')
         }
-        # 20200915, add all from tifHeader
-        for k,v in tifHeader.items():
+
+        # Add all from tifHeader
+        for k,v in tiffHeader_lower.items():
+            #k = k.lower()
             metadata[k] = v
 
     # my volumes are zxy, fiji wants TZCYXS
@@ -67,7 +74,8 @@ def imsave(path, imageData, tifHeader=None, overwriteExisting=False):
         #print('bTiffFile.imsave() is saving with metadata:')
         #print(metadata)
 
-        logger.info('Saving metadata:')
+        logger.info('Saving metadata (tifffile will save all keys as lower case):')
+        logger.info(f'  resolution:{resolution}')
         pprint(metadata)
         
         if tifffile.__version__ == '0.15.1':
