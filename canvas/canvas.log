@@ -1,0 +1,22 @@
+2022-08-24 09:59:42,883   INFO canvas.interface.canvasApp  canvasApp.py main() line:383 -- withJavaBridge:False canvasPath:None
+2022-08-24 09:59:42,955   INFO canvas.interface.canvasApp  canvasApp.py main() line:396 --   iconPath:/Users/cudmore/Sites/Canvas/canvas/interface/icons/miro-canvas-64.png
+2022-08-24 09:59:42,984   INFO canvas.canvasUtil  canvasUtil.py _addUserPath() line:105 -- 
+2022-08-24 09:59:42,984   INFO canvas.canvasUtil  canvasUtil.py _makeCanvasFolders() line:135 -- Making <user>/Canvas folder "/Users/cudmore/Documents/Canvas"
+2022-08-24 09:59:42,984   INFO canvas.canvasUtil  canvasUtil.py _makeCanvasFolders() line:145 --     copying folder tree to <user>/Documents/Canvas folder
+2022-08-24 09:59:42,984   INFO canvas.canvasUtil  canvasUtil.py _makeCanvasFolders() line:146 --     _srcPath:/Users/cudmore/Sites/Canvas/canvas/_userFiles/Canvas
+2022-08-24 09:59:42,984   INFO canvas.canvasUtil  canvasUtil.py _makeCanvasFolders() line:147 --     _dstPath:/Users/cudmore/Documents/Canvas
+2022-08-24 09:59:42,987   INFO canvas.canvasUtil  canvasUtil.py _addUserPath() line:114 -- Adding to sys.path: /Users/cudmore/Documents/Canvas
+2022-08-24 09:59:42,987   INFO canvas.canvasUtil  canvasUtil.py _addUserPath() line:117 -- sys.path is now:
+2022-08-24 09:59:42,987   INFO canvas.canvasUtil  canvasUtil.py _addUserPath() line:119 --     /Users/cudmore/opt/miniconda3/envs/canvas-env/bin
+2022-08-24 09:59:42,987   INFO canvas.canvasUtil  canvasUtil.py _addUserPath() line:119 --     /Users/cudmore/opt/miniconda3/envs/canvas-env/lib/python39.zip
+2022-08-24 09:59:42,987   INFO canvas.canvasUtil  canvasUtil.py _addUserPath() line:119 --     /Users/cudmore/opt/miniconda3/envs/canvas-env/lib/python3.9
+2022-08-24 09:59:42,987   INFO canvas.canvasUtil  canvasUtil.py _addUserPath() line:119 --     /Users/cudmore/opt/miniconda3/envs/canvas-env/lib/python3.9/lib-dynload
+2022-08-24 09:59:42,987   INFO canvas.canvasUtil  canvasUtil.py _addUserPath() line:119 --     /Users/cudmore/opt/miniconda3/envs/canvas-env/lib/python3.9/site-packages
+2022-08-24 09:59:42,987   INFO canvas.canvasUtil  canvasUtil.py _addUserPath() line:119 --     /Users/cudmore/Sites/Canvas
+2022-08-24 09:59:42,987   INFO canvas.canvasUtil  canvasUtil.py _addUserPath() line:119 --     /Users/cudmore/Documents/Canvas
+2022-08-24 09:59:42,987   INFO canvas.interface.canvasApp  canvasApp.py __init__() line:42 -- We created <user>/Documents/Canvas and need to restart
+2022-08-24 09:59:46,067   INFO canvas.interface.canvasApp  canvasApp.py __init__() line:45 -- path: None
+2022-08-24 09:59:46,074   INFO canvas.canvasOptions  canvasOptions.py optionsLoad() line:127 -- creating defaults options and saving them in: /Users/cudmore/Documents/Canvas/scopeOptions/scopeConfig.json
+2022-08-24 09:59:46,075   INFO canvas.canvasOptions  canvasOptions.py optionsSave() line:152 -- saving:/Users/cudmore/Documents/Canvas/scopeOptions/scopeConfig.json
+2022-08-24 09:59:46,079   INFO canvas.interface.bMenu  bMenu.py _buildCanvasMenu() line:79 -- 
+2022-08-24 09:59:47,407   INFO canvas.interface.bMenu  bMenu.py quit() line:130 -- 
