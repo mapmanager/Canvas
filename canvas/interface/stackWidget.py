@@ -359,6 +359,10 @@ class _histogram(QtWidgets.QWidget):
         if self._plotLogHist:
             y = np.log10(y, where=y>0)
 
+        # abb windows
+        # Exception: X and Y arrays must be the same shape--got (256,) and (255,).
+        x = x[:-1]
+
         self.pgHist.setData(x=x, y=y)
 
         # color the hist based on xxx
@@ -483,8 +487,8 @@ class _histogram(QtWidgets.QWidget):
 
         # pyqtgraph histogram
         # don't actually use image on building, wait until self.slot_setImage()
-        x = [np.nan, np.nan]
-        y = [np.nan]
+        x = []  #[np.nan, np.nan]
+        y = []  #[np.nan]
 
         brush = 0.7 #pgColor = 0.7
 

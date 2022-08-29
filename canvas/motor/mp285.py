@@ -13,7 +13,7 @@ class mp285(bMotor):
 
         linen sutter is COM4
         """
-        super().__init__(self, type='mp285')
+        super().__init__(type='mp285')
 
         self.swapxy = True
         self.verbose = True
@@ -140,8 +140,8 @@ class mp285(bMotor):
             return False
 
         try:
-            self.ser.write(b'V' + binaryVelocity + b'\r')
-            self.ser.read(1)
+            self._ser.write(b'V' + binaryVelocity + b'\r')
+            self._ser.read(1)
         except:
             logger.error('  Unknown exception')
             logger.error(traceback.format_exc())
@@ -162,9 +162,9 @@ class mp285(bMotor):
             return theRet
 
         try:
-            self.ser.write(b'c\r')
+            self._ser.write(b'c\r')
 
-            resp = self.ser.read(13) # 12 +1 (3 4-byte signed long numbers + CR)
+            resp = self._ser.read(13) # 12 +1 (3 4-byte signed long numbers + CR)
             resp = resp.rstrip() # strip of trailing '\r'
 
             if len(resp) == 0:
@@ -180,12 +180,19 @@ class mp285(bMotor):
                 # < is little endian
                 stepTuple = struct.unpack('<lll', resp) # < is little-endian
                 micronList = [x*self.stepSize for x in stepTuple]
-                theRet = (micronList[0], micronList[1], micronList[2])
+                # abb hopkins, swaping x/y
+                #theRet = (micronList[0], micronList[1], micronList[2])
+                theRet = (micronList[1], micronList[0], micronList[2])
         except:
             logger.error('  Unknown exception')
             logger.error(traceback.format_exc())
         finally:
             if openPort: self.close()
+
+        # abb hopkins, swap x/y
+        # _tmp = theRet[0]
+        # theRet[0] = theRet[1]
+        # theRet[1] = _tmp
 
         if verbose:
             logger.info(f'  returning: "{theRet}')
@@ -241,14 +248,14 @@ class mp285(bMotor):
 
             xyzb = struct.pack('lll',x,y,z) # convert integer values into bytes
             startt = time.time() # start timer
-            self.ser.write(b'm' + xyzb + b'\r') # send position to controller; add the "m" and the CR to create the move command
+            self._ser.write(b'm' + xyzb + b'\r') # send position to controller; add the "m" and the CR to create the move command
 
             cr = []
-            cr = self.ser.read(1) # read carriage return and ignore
+            cr = self._ser.read(1) # read carriage return and ignore
             endt = time.time() # stop timer
 
             if len(cr)== 0:
-                logger.error(f'  did not finish moving before timeout {self.timeout} sceonds')
+                logger.error(f'  did not finish moving before timeout {self._timeout} sceonds')
             else:
                 logger.info(f'  completed in {round((endt-startt),2)} seconds')
 
@@ -274,7 +281,7 @@ def test_mp285():
     (x,y,z) = m.readPosition()
     print('  test_mp285 readPosition() x:', x, 'y:', y, 'z:', z)
 
-    (x,y,z) = m.moveto('left', 500)
+    (x,y,z) = m.move('left', 500)
     print('  test_mp285 after moveto() x:', x, 'y:', y, 'z:', z)
 
 if __name__ == '__main__':

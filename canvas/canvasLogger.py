@@ -107,6 +107,9 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
     logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
 
+    # abb windows
+    raise
+
 sys.excepthook = handle_exception
 
 # This does not seem like a good idea, without it, we get exception calling

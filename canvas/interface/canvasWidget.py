@@ -1727,6 +1727,9 @@ class myCrosshairRectItem(QtWidgets.QGraphicsRectItem):
         self.width = None  #693.0
         self.height = None  #433.0
 
+        # NoButton break left-mouse click selection
+        self.setAcceptedMouseButtons(QtCore.Qt.NoButton)
+
         #myRect = QtCore.QRectF(self.xPos, self.yPos, self.width, self.height)
         # I really do not understand use of parent ???
         # was this
