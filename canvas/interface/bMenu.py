@@ -25,7 +25,7 @@ class bMenu:
         if sys.platform.startswith('darwin') :
             self.myMenuBar = QtWidgets.QMenuBar() # parentless menu bar for Mac OS
         else :
-            self.myMenuBar = parent.menuBar() # refer to the default one
+            self.myMenuBar = self.myCanvasApp.menuBar() # refer to the default one
 
         file = self.myMenuBar.addMenu("File")
         file.addAction('New Canvas ...', self.newCanvas, QtGui.QKeySequence(QtCore.Qt.CTRL + QtCore.Qt.Key_N))
