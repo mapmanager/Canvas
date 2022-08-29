@@ -87,7 +87,7 @@ def _getUserCanvasFolder():
 
 def _getScopeOptionsFolder():
     canvasFolder = _getUserCanvasFolder()
-    scopeOptionsFolder = os.path.join(canvasFolder, 'scopeOptions')
+    scopeOptionsFolder = os.path.join(canvasFolder, 'scopeoptions')
     return scopeOptionsFolder
 
 def _getLogFolder():
