@@ -2,7 +2,7 @@
 # Date: 20190630
 
 import os, sys, traceback
-import copy # to do deepcopy of (dict, OrderedDict)
+#import copy # to do deepcopy of (dict, OrderedDict)
 from collections import OrderedDict
 from datetime import datetime
 from pprint import pprint
@@ -396,22 +396,23 @@ class canvasApp(QtWidgets.QMainWindow):
             logger.info(f'Assigning new motor:{newMotorName} {newPort}')
             self.assignMotor(newMotorName, newPort)
 
-def main(withJavaBridge=False, canvasPath : str = None):
+def main(canvasPath : str = None):
     """Main entry point to run the canvas interface.
 
     Args:
-        withJavaBridge: If true use javabridge and bioformats (on olympus scope)
         canvasPath: full path to existing canvas (for debugging).
     """
+    import canvas.canvasJavaBridge
+    
     try:
-        logger.info(f'Starting withJavaBridge:{withJavaBridge} canvasPath:{canvasPath}')
+        logger.info(f'Starting canvasPath:{canvasPath}')
+        
+        # print all package info
         _versionDict = canvas.canvasUtil.getVersionInfo()
         for k,v in _versionDict.items():
             logger.info(f'  {k}:{v}')
 
-        if withJavaBridge:
-            myJavaBridge = canvas.canvasJavaBridge()
-            myJavaBridge.start()
+        _javaBridgeStarted = canvas.canvasJavaBridge._startJavaBridge()
 
         app = QtWidgets.QApplication(sys.argv)
         app.setQuitOnLastWindowClosed(False)
@@ -441,12 +442,10 @@ def main(withJavaBridge=False, canvasPath : str = None):
 
     except Exception as e:
         logger.error('\nEXCEPTION: canvasApp.main()')
-        print(traceback.format_exc())
-        if withJavaBridge:
-            myJavaBridge.stop()
+        logger.error(traceback.format_exc())
     finally:
-        if withJavaBridge:
-            myJavaBridge.stop()
+        canvas.canvasJavaBridge._stopJavaBridge()
+
     logger.info('canvasApp.main() last line .. bye bye')
 
 
@@ -455,17 +454,15 @@ if __name__ == '__main__':
     call main() with or without javabridge
     """
 
-    withJavaBridge = False
-
     okGo = True
-    if len(sys.argv) > 1:
-        if sys.argv[1] == 'javabridge':
-            withJavaBridge = True
-        else:
-            okGo = False
-            logger.error(f'Did not understand command line:{sys.argv[1]}')
+    # if len(sys.argv) > 1:
+    #     if sys.argv[1] == 'javabridge':
+    #         withJavaBridge = True
+    #     else:
+    #         okGo = False
+    #         logger.error(f'Did not understand command line:{sys.argv[1]}')
 
     if okGo:
         canvasPath = '/Users/cudmore/data/canvas/20220809_tstlinen1/20220809_tstlinen1_canvas.txt'
         canvasPath = '/Users/cudmore/data/canvas/20220823_a100/20220823_a100_canvas.json'
-        main(withJavaBridge, canvasPath=canvasPath)
+        main(canvasPath=canvasPath)

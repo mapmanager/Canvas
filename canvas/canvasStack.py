@@ -26,38 +26,40 @@ class canvasStack:
     Image data is in self.stack
     """
     #def __init__(self, path='', folderPath='', loadImages=True, loadTracing=True):
-    def __init__(self, path='', loadImages=True, loadTracing=True):
+    def __init__(self, path='', loadImages=True):
         """
-        path: full path to file
-        folderPath: path to folder with .tif files
+        Args:
+            path: full path to file or folder with .tif files
+            loadImages: If True then load raw image data, otherwise just the header
         """
         if path and not os.path.isfile(path):
             logger.error(f'Did not find file path: {path}')
             raise ValueError('  raising ValueError: bStack() file not found: ' + path)
 
-        self._numChannels = None
-        self.slabList = None
-
         self.path = path # path to file
 
-        # todo: put into function
-        if os.path.isdir(path):
+        # create and load header
+        if os.path.isfile(path):
+            self.header = canvas.canvasStackHeader(path)
+        elif os.path.isdir(path):
+            # todo: put into function
             fileList = glob.glob(path + '/*.tif')
-            fileList = sorted(fileList)
+            if not fileList:
+                fileList = glob.glob(path + '/*.tiff')
             numFiles = len(fileList)
             if numFiles < 1:
-                print('error: bStack() did not find any .tif files in folder path:', path)
+                logger.error(f'Did not find any .tif files in folder path: {path}')
+                return
+            fileList = sorted(fileList)
             firstFile = os.path.join(path, fileList[0])
-            self.header = canvas.canvasStackHeader(firstFile) #StackHeader.StackHeader(self.path)
-            print(f'bStack() __init__ with {numFiles} from folder path {path}')
+            self.header = canvas.canvasStackHeader(firstFile)
+            logger.info(f'loaded {numFiles} from folder: {path}')
         else:
-            self.header = canvas.canvasStackHeader(self.path) #StackHeader.StackHeader(self.path)
-
-        # header
+            logger.error(f'Expecting a file or folder path, got: {path}')
 
         self._maxNumChannels = 3 # leave this for now
         # pixel data, each channel is element in list
-        # *3 because we have (raw, mask, edt, skel) for each stack#
+        # *4 because we have (raw, mask, edt, skel) for each stack#
         self._stackList = [None for tmp in range(self._maxNumChannels * 4)]
         self._maxList = [None for tmp in range(self._maxNumChannels * 4)]
 
@@ -65,23 +67,19 @@ class canvasStack:
         # load image data
         if loadImages:
             self.loadStack2() # loads data into self._stackList
-            for _channel in range(self._numChannels):
+            for _channel in range(self.numChannels):
                 self._makeMax(_channel)
 
     def print(self):
         self.printHeader()
         for idx, stack in enumerate(self._stackList):
             if stack is None:
-                #print('    ', idx, 'None')
                 pass
             else:
-                print('    channel:', idx, stack.shape)
+                logger.info(f' raw data channel:{idx} shape is:{stack.shape}')
 
     def printHeader(self):
         self.header.print()
-
-    def prettyPrint(self):
-        self.header.prettyPrint()
 
     def _getSavePath(self):
         """
@@ -90,7 +88,6 @@ class canvasStack:
         path, filename = os.path.split(self.path)
         savePath = os.path.join(path, os.path.splitext(filename)[0])
         return savePath
-
 
     @property
     def maxNumChannels(self):
@@ -109,8 +106,7 @@ class canvasStack:
 
     @property
     def numChannels(self):
-        #return self.header.numChannels
-        return self._numChannels # abb aics
+        return self.header.numChannels
 
     @property
     def numSlices(self):
@@ -213,17 +209,22 @@ class canvasStack:
 
     def getStack(self, channel:int=1):
         """
-        Can be none
+        Get the stack data for one channel.
 
-        Parameters:
-            type: (raw, mask, skel)
+        Args:
             channel: 1 based
+
+        Returns:
+            np.ndarray or None
         """
         # leftover from bImPy
         # if not stackType in ['raw', 'mask', 'skel', 'video']:
         #     print('  error: bStack.getStack() expeting type in [raw, mask, skel], got:', type)
         #     return None
 
+        if channel > self.numChannels:
+            logger.error(f'Max number of channels is {self.header.numChannels}, got {channel}')
+            return
         channelIdx =  channel - 1
         theRet = self._stackList[channelIdx]
         return theRet
@@ -420,16 +421,18 @@ class canvasStack:
 
     def getMax(self, channel=1):
         """
-        channel: 1 based
+        Args:
+            channel: 1 based
         """
         channel -= 1
         theRet = self._maxList[channel]
         return theRet
 
-    def _makeMax(self, channelIdx, convertTo8Bit=False):
-        """
-        channelIdx: 0 based
-        convertTo8Bit: not used
+    def _makeMax(self, channelIdx):
+        """Make max projection for one channel.
+        
+        Args:
+            channelIdx: 0 based
         """
         theMax = None
         stackData = self._stackList[channelIdx]
@@ -443,81 +446,68 @@ class canvasStack:
             elif nDim == 3:
                 theMax = np.max(stackData, axis=0)
             else:
-                logger.warning('Got bad dimensions for channelIdx:{channelIdx} nDim:{nDim}')
-        #if theMax is not None and convertTo8Bit:
-        #    theMax = theMax.astype(np.uint8)
+                logger.warning(f'Got bad dimensions for channelIdx:{channelIdx} nDim:{nDim}')
+
         self._maxList[channelIdx] = theMax
 
-    def loadStack2(self, verbose=False):
-        if os.path.isdir(self.path):
-            self.loadFromFolder()
-            return True
+    def dataIsLoaded(self):
+        """True if at least one channel is loaded.
+        """
+        for i in range(self.numChannels):
+            if self._stackList[i] is not None:
+                return True
+        return False
 
-        # patric jhu uses .tiff not .tif
+    def loadStack2(self):
+        """
+        Load raw stack data.
+        """
+        if not os.path.exists(self.path):
+            logger.error(f'Did not find file path: {self.path}')
+            return
+
         basename, _fileExt = os.path.splitext(self.path)
 
-        #todo: I can't just replace str _ch1/_ch2, only replace if it is at end of filename !!!
-        basename = basename.replace('_ch1', '')
-        basename = basename.replace('_ch2', '')
-
-        self._numChannels = 0
-
-        # oir
-        path_oir = basename + '.oir'
-        if os.path.exists(path_oir):
-            logger.info(f'  path_oir: {path_oir}')
-            self.loadBioFormats_Oir() # sinfle oir file (can have multiple channels)
-            return True
-
-        # no channel
-        # path_noChannel = basename + '.tif'
-        path_noChannel = basename + _fileExt
-        if os.path.exists(path_noChannel):
-            logger.info(f'  path_noChannel:{path_noChannel}')
+        if os.path.isdir(self.path):
+            self._loadFromFolder()
+        elif _fileExt == '.oir':
+            self._loadBioFormats_Oir() # oir file (can have multiple channels)
+        else:
             try:
-                stackData = tifffile.imread(path_noChannel)
+                stackData = tifffile.imread(self.path)
             except (tifffile.TiffFileError) as e:
-                logger.error(f'\nEXCEPTION: bStack.loadStack2() e: {e}')
+                logger.error(f'\nEXCEPTION e: {e}')
             else:
                 # if ScanImage and numChannels>1 ... deinterleave
                 logger.info(f'  self.header.stackType:{self.header.stackType}')
-                if self.header.stackType == 'ScanImage':
-                    logger.info('  modifying header with SI header info')
+                if self.header.numChannels > 1:
                     numChannels = self.header.numChannels
-                    self._numChannels = numChannels
-                    if numChannels > 1:
-                        for channelIdx in range(numChannels):
-                            start = channelIdx
-                            if stackData.shape[0] % numChannels != 0:
-                                logger.error('  scanimage num slices error')
-                            #stop = int(stackData.shape[0] / numChannels) # assuming we get an integer
-                            stop = stackData.shape[0]
-                            step = numChannels
-                            sliceRange = range(start, stop, step)
-
-                            setNumSlices = len(sliceRange)
-                            self.header['numImages'] = setNumSlices
-
-                            self._stackList[channelIdx] = stackData[sliceRange, :, :]
-                            self._makeMax(channelIdx)
-                    else:
-                        self._stackList[0] = stackData
-                        self._makeMax(0)
-                        #self._numChannels = 1 #+= 1
+                    
+                    stackDataList = self._deinterleave(stackData, numChannels)
+                    for _channelIdx in range(self.numChannels):
+                        self._stackList[_channelIdx] = stackDataList[_channelIdx]
                 else:
                     self._stackList[0] = stackData
                     self._makeMax(0)
-                    self._numChannels = 1 #+= 1
                 #
                 return True
-        # 1
+
+        # load (_ch1, _ch2), this is for backward compatibility with
+        # MapManager Igor
+
+        #TODO: I can't just replace str _ch1/_ch2,
+        # only replace if it is at end of filename !!!
+        
+        '''
+        basename = basename.replace('_ch1', '')
+        basename = basename.replace('_ch2', '')
+
         path_ch1 = basename + '_ch1.tif'
         if os.path.exists(path_ch1):
             logger.info(f'  path_ch1: {path_ch1}')
             stackData = tifffile.imread(path_ch1)
             self._stackList[0] = stackData
             self._makeMax(0)
-            self._numChannels = 1 #+= 1
         # 2
         path_ch2 = basename + '_ch2.tif'
         if os.path.exists(path_ch2):
@@ -525,31 +515,53 @@ class canvasStack:
             stackData = tifffile.imread(path_ch2)
             self._stackList[1] = stackData
             self._makeMax(1)
-            self._numChannels = 2 #+= 1
+        '''
 
-    def loadFromFolder(self):
+    def _deinterleave(self, stackData : np.ndarray, numChannels : int):
+        """Deinterleave raw stack data into a number of channels.
+
+        Args:
+            stackData:  CXY
+            numChannels:
+        """
+        if stackData.shape[0] % numChannels != 0:
+            logger.error('  num rows in stack data must be divisible by numChannels')
+
+        channelDataList = [None] * numChannels
+        for channelIdx in range(numChannels):
+            start = channelIdx
+            stop = stackData.shape[0]
+            step = numChannels
+
+            sliceRange = range(start, stop, step)
+            numImagesPerChannel = len(sliceRange)
+            self.header['numImages'] = numImagesPerChannel
+
+            #self._stackList[channelIdx] = stackData[sliceRange, :, :]
+            channelDataList[channelIdx] = stackData[sliceRange, :, :]
+
+        return channelDataList
+
+    def _loadFromFolder(self):
         """
         load a stack from a folder of .tif files
         """
         stackData = tifffile.imread(self.path + '/*.tif')
         numChannels = stackData.shape[1] # assuming [slices][channels][x][y]
         numSlices = stackData.shape[0] # assuming [slices][channels][x][y]
-        self._numChannels = numChannels
         self.header['numImages'] = numSlices
         logger.info(f'stackData:{stackData.shape}')
         for channel in range(numChannels):
             self._stackList[channel] = stackData[:, channel, :, :]
             self._makeMax(channel)
 
-    def loadBioFormats_Oir(self):
-        if bioformats is None:
-            logger.error('Bioformats was not imported, can only open .tif files.')
-            return False
-
-        self.loadHeader()
-
-        rows = self.linesPerFrame
-        cols = self.pixelsPerLine
+    def _loadBioFormats_Oir(self):
+        """Load raw data from .oir using bioformats.
+        
+        Requires javabridge.
+        """
+        #linesPerFrame = self.linesPerFrame
+        #pixelsPerLine = self.pixelsPerLine
         #slices = self.numImages
 
         # get channel from oir header
@@ -557,11 +569,15 @@ class canvasStack:
         numChannels = self.header.numChannels
         numImages = self.header.numImages
 
-        verbose = True
-        if verbose: print(' using bioformats ...', 'numChannels:', numChannels, 'numImages:', numImages, 'rows:', rows, 'cols:', cols)
+        logger.info(f'  numChannels: {numChannels} numImages:{numImages}')
+        #logger.info(f'  linesPerFrame:{linesPerFrame} pixelsPerLine:{pixelsPerLine}')
 
-        #with bioformats.GetImageReader(self.path) as reader:
         with bioformats.ImageReader(self.path) as reader:
+
+            # _coreMetadataList = reader.getCoreMetadataList()
+            # print(_coreMetadataList)
+            # _seriesMetadata = reader.getSeriesMetadata()
+
             for channelIdx in range(numChannels):
                 c = channelIdx
                 numImagesLoaded = 0
@@ -573,39 +589,28 @@ class canvasStack:
                         z = 0
                         t = imageIdx
                     else:
-                        print('      ****** Error: bStack.loadStack() did not get valid self.header.stackType:', self.header.stackType)
+                        logger.error(f'  Did not get valid header stackType: {self.header.stackType}')
                         z = 0
                         t = imageIdx
-                    #print('imageIdx:', imageIdx)
+
                     image = reader.read(c=c, t=t, z=z, rescale=False) # returns numpy.ndarray
-                    #image = reader.read(c=c, rescale=False) # returns numpy.ndarray
+
                     loaded_shape = image.shape # we are loading single image, this will be something like (512,512)
                     loaded_dtype = image.dtype
                     newShape = (numImages, loaded_shape[0], loaded_shape[1])
-                    # resize
-                    #print('      oir loaded_shape:', loaded_shape, self.path)
 
-                    # abb canvas removed
-                    #if channelIdx==0 and imageIdx == 0:
-                    #    print('      loaded_shape:', loaded_shape, 'loaded_dtype:', loaded_dtype, 'newShape:', newShape)
-                    #    self.stack = np.zeros(newShape, dtype=loaded_dtype)
                     if imageIdx == 0:
                         self._stackList[channelIdx] = np.zeros(newShape, dtype=loaded_dtype)
-                    # assign
-                    #self.stack[channelIdx,imageIdx,:,:] = image
                     self._stackList[channelIdx][imageIdx,:,:] = image
-                    self._numChannels = channelIdx + 1
 
                     numImagesLoaded += 1
 
                 #
                 # abb canvas, this is redundant
                 self.header.assignToShape2(self._stackList[channelIdx])
+
         #
         #self.header.assignToShape(self.stack)
-
-        print('  bStack.loadBioFormats_Oir() is done with ...')
-        self.print()
 
         return True
 
@@ -614,16 +619,13 @@ def old_main():
     debugging
     """
 
-    #import javabridge
-
     path = '/Users/cudmore/data/canvas/20200911/20200911_aaa/xy512z1zoom5bi_00001_00010.tif'
     path = '/Users/cudmore/data/canvas/20200913/20200913_aaa/xy512z1zoom5bi_00001_00009.tif'
 
-    # testing oir on olympus scope
-    path = 'C:/Users/Administrator/Desktop/Sites/canvas/20200311__0001.oir'
-
+    # test oir
     if 1:
         print('--- bstack __main__ is instantiating stack')
+        path = 'C:/Users/Administrator/Desktop/Sites/canvas/20200311__0001.oir'
         myStack = bStack(path)
 
     # test canvas video
@@ -659,11 +661,6 @@ def old_main():
         print('theMax:', theMax)
 
     if 0:
-        from bJavaBridge import bJavaBridge
-
-        myJavaBridge = bJavaBridge()
-        myJavaBridge.start()
-
         try:
             myStack = bStack(path)
 
@@ -671,7 +668,7 @@ def old_main():
             myStack.printHeader()
 
         finally:
-            myJavaBridge.stop()
+            pass
 
     print('bstack __main__ finished')
 
@@ -690,8 +687,22 @@ def test_load_scanimage():
     print('  _min:', _min)
     print('  _max:', _max)
     
+def test_load_oir():
+    import canvas.canvasJavaBridge
+
+    _startedJavaBridge = canvas.canvasJavaBridge._startJavaBridge()
+
+    path = '/Users/cudmore/data/example-oir/20190416__0001.oir'
+    cs = canvasStack(path)
+    print(cs)
+
+    if _startedJavaBridge:
+        canvas.canvasJavaBridge._stopJavaBridge()
+
 if __name__ == '__main__':
-    test_load_scanimage()
+    #test_load_scanimage()
     
+    test_load_oir()
+
     #old_main()
 

@@ -361,7 +361,9 @@ class _histogram(QtWidgets.QWidget):
 
         # abb windows
         # Exception: X and Y arrays must be the same shape--got (256,) and (255,).
-        x = x[:-1]
+        # abb macos
+        # Exception: len(X) must be len(Y)+1 since stepMode=True (got (255,) and (255,))
+        #x = x[:-1]
 
         self.pgHist.setData(x=x, y=y)
 
@@ -487,8 +489,13 @@ class _histogram(QtWidgets.QWidget):
 
         # pyqtgraph histogram
         # don't actually use image on building, wait until self.slot_setImage()
-        x = []  #[np.nan, np.nan]
-        y = []  #[np.nan]
+        # Exception: len(X) must be len(Y)+1 since stepMode=True (got (0,) and (0,))
+        # abb hopkins, windows
+        x = [0, 1]  #[np.nan, np.nan]
+        y = [0]  #[np.nan]
+        # abb hopkins, mac
+        # x = None
+        # y = None
 
         brush = 0.7 #pgColor = 0.7
 
@@ -1296,10 +1303,10 @@ if __name__ == '__main__':
     from pprint import pprint
     
     try:
-        withJavaBridge = False
-        if withJavaBridge:
-            myJavaBridge = canvas.canvasJavaBridge()
-            myJavaBridge.start()
+        # withJavaBridge = False
+        # if withJavaBridge:
+        #     myJavaBridge = canvas.canvasJavaBridge()
+        #     myJavaBridge.start()
 
         app = QtWidgets.QApplication(sys.argv)
 
@@ -1334,8 +1341,9 @@ if __name__ == '__main__':
     except Exception as e:
         logger.error('\nEXCEPTION: stackWidget.main()')
         print(traceback.format_exc())
-        if withJavaBridge:
-            myJavaBridge.stop()
+        # if withJavaBridge:
+        #     myJavaBridge.stop()
     finally:
-        if withJavaBridge:
-            myJavaBridge.stop()
+        pass
+        # if withJavaBridge:
+        #     myJavaBridge.stop()

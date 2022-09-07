@@ -166,6 +166,8 @@ class bCanvas:
         return theFile
 
     def numFiles(self):
+        """Get the total number of files including (scanning, video).
+        """
         return len(self._fileDictList.keys())
 
     def numVideoFiles(self):
@@ -227,24 +229,36 @@ class bCanvas:
     def _defaultFileDict(self):
         """Each entry in _fileDictList is this dict
         """
-        theDict = {
-            'canvasStack': None,  # actual canvas.canvasStack object
-            'date': None,
-            'time': None,
-            'seconds': None,
-            'xMotor': None,
-            'yMotor': None,
-            'zMotor': None,
-            'umWidth': None,
-            'umHeight': None,
-            # canvas specific (not in stack header)
-            'stackType': '',  # (canvasStackType.scope, canvasStackType.video
-            'relPath': None,
-            'isVisible': True,
-            'minContrast': None,
-            'maxContrast': None,
-        }
-        return theDict
+        path = None
+        defaultHeader = canvas.canvasStackHeader.getDefaultHeader(path)
+
+        defaultHeader['canvasStack'] = None  # actual canvas.canvasStack object'
+        defaultHeader['stackType'] = ''  # (canvasStackType.scope, canvasStackType.video
+        #defaultHeader['relPath'] = None
+        defaultHeader['isVisible'] = True
+        defaultHeader['minContrast'] = None
+        defaultHeader['maxContrast'] = None
+
+        return defaultHeader
+
+        # theDict = {
+        #     'canvasStack': None,  # actual canvas.canvasStack object
+        #     'date': None,
+        #     'time': None,
+        #     'seconds': None,
+        #     'xMotor': None,
+        #     'yMotor': None,
+        #     'zMotor': None,
+        #     'umWidth': None,
+        #     'umHeight': None,
+        #     # canvas specific (not in stack header)
+        #     'stackType': '',  # (canvasStackType.scope, canvasStackType.video
+        #     'relPath': None,
+        #     'isVisible': True,
+        #     'minContrast': None,
+        #     'maxContrast': None,
+        # }
+        # return theDict
 
     def appendStack(self, newStack : canvas.canvasStack,
                         stackType: canvasStackType) -> dict:
@@ -257,30 +271,35 @@ class bCanvas:
         Return:
             xxx
         """
-        fileName = newStack.getFileName()
-        if stackType == canvasStackType.video:
-            relPath = 'video'  #os.path.join('video', fileName)
-        else:
-            relPath = ''  # fileName
+        #fileName = newStack.getFileName()
+        # if stackType == canvasStackType.video:
+        #     relPath = 'video'  #os.path.join('video', fileName)
+        # else:
+        #     relPath = ''  # fileName
 
-        fileDict = self._defaultFileDict()
-        fileDict['canvasStack'] = newStack  # canvas.canvasStack object
-        fileDict['date'] = newStack.header['date']
-        fileDict['time'] = newStack.header['time']
-        fileDict['seconds'] = newStack.header['seconds']
-        fileDict['xMotor'] = newStack.header['xMotor']
-        fileDict['yMotor'] = newStack.header['yMotor']
-        fileDict['zMotor'] = newStack.header['zMotor']
-        fileDict['umWidth'] = newStack.header['umWidth']
-        fileDict['umHeight'] = newStack.header['umHeight']
+        fileDict = self._defaultFileDict()  # from canvasStackHeader.getDefaultHeader(path)
+        
+        for k in fileDict.keys():
+            fileDict[k] = newStack.header[k]
+
+        # fileDict['date'] = newStack.header['date']
+        # fileDict['time'] = newStack.header['time']
+        # fileDict['seconds'] = newStack.header['seconds']
+        # fileDict['xMotor'] = newStack.header['xMotor']
+        # fileDict['yMotor'] = newStack.header['yMotor']
+        # fileDict['zMotor'] = newStack.header['zMotor']
+        # fileDict['umWidth'] = newStack.header['umWidth']
+        # fileDict['umHeight'] = newStack.header['umHeight']
         #
+        fileDict['canvasStack'] = newStack  # canvas.canvasStack object
         fileDict['stackType'] = stackType.value  # in (2p, video)
-        fileDict['relPath'] = relPath
+        #fileDict['relPath'] = relPath
         fileDict['isVisible'] = True
         fileDict['minContrast'] = 0
         fileDict['maxContrast'] = 2**newStack.header['bitDepth'] - 1
         
         # TODO: check if it exists
+        fileName = newStack.getFileName()
         self._fileDictList[fileName] = fileDict
 
         # logger.info(f'{fileName} dict is now')
@@ -589,8 +608,11 @@ class bCanvas:
                 for fileName, fileDict in item.items():
                     # fileDict is what we store in _defaultFileDict
                     _canvasStackType = fileDict['stackType']  # (2p, video)
-                    relPath = fileDict['relPath']  # (2p, video)
-    
+                    #relPath = fileDict['relPath']  # (2p, video)
+                    if _canvasStackType == 'video':
+                        relPath = 'video'  # 'video' folder
+                    else:
+                        relPath = ''  # root folder
                     stackFilePath = os.path.join(self._folderPath, relPath, fileName)
                     logger.info(f'  stackFilePath:{stackFilePath}')
                     
@@ -620,10 +642,6 @@ class bCanvas:
 
 def old_main():
     try:
-        from bJavaBridge import bJavaBridge
-        myJavaBridge = bJavaBridge()
-        myJavaBridge.start()
-
         folderPath = '/Users/cudmore/box/data/nathan/canvas/20190429_tst2'
         bc = bCanvas(folderPath=folderPath)
         #print(bc._optionsDict)
@@ -643,7 +661,7 @@ def old_main():
         '''
 
     finally:
-        myJavaBridge.stop()
+        pass
 
 def test_canvas():
     path = '/Users/cudmore/data/canvas/20220823_a100/20220823_a100_canvas.json'
@@ -660,4 +678,10 @@ def test_canvas():
     '''
 
 if __name__ == '__main__':
+    import canvasJavaBridge
+    _started = canvasJavaBridge._startJavaBridge()
+
     test_canvas()
+
+    if _started:
+        canvasJavaBridge._stopJavaBridge()

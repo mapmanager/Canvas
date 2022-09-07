@@ -5,6 +5,7 @@ from logging.handlers import RotatingFileHandler
 import pathlib
 
 """
+Log Levels Are:
 DEBUG
 INFO
 WARNING

@@ -13,12 +13,11 @@ from datetime import datetime
 import threading, queue
 from collections import OrderedDict
 
-#from canvas import bWatchFolder, bPrior
 import canvas
 
 class bLogFilePosition(threading.Thread):
 	"""
-	To be run as background thred.
+	To be run as background thread.
 	As new files appear in watched folder (path, e.g. bWatchFolder)
 
 	For each new file, log a line to a text file

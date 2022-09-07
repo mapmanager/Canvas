@@ -42,6 +42,14 @@ def getVersionInfo() -> dict:
     import platform
     versionDict['Python'] = platform.python_version()
 
+    # numpy
+    import numpy as np
+    versionDict['NumPy'] = np.__version__
+
+    # pandas
+    import pandas as pd
+    versionDict['Pandas'] = pd.__version__
+
     # pyqt (interface)
     PYQT_VERSION_STR = QtCore.PYQT_VERSION_STR
     versionDict['PyQt'] = PYQT_VERSION_STR
@@ -53,6 +61,32 @@ def getVersionInfo() -> dict:
     # opencv (interface)
     from cv2 import __version__
     versionDict['python-opencv'] = __version__
+
+    # python-bioformats
+    from bioformats import __version__
+    versionDict['python-bioformats'] = __version__
+
+    # python-javabridge
+    from javabridge import __version__
+    versionDict['python-javabridge'] = __version__
+
+    # JAVA_HOME
+    # on macOs m1 laptop, this is '/Library/Java/JavaVirtualMachines/jdk1.8.0_341.jdk/Contents/Home'
+    if 'JAVA_HOME' in os.environ:
+        #logging.info(f"JAVA_HOME is {os.environ['JAVA_HOME']}")
+        versionDict['JAVA_HOME'] = os.environ['JAVA_HOME']
+    else:
+        #logging.info("JAVA_HOME is not set")
+        versionDict['JAVA_HOME'] = 'Not defined'
+
+    # this works but we can't start/stop javabridge
+    '''
+    if javabridge.get_env() is None:
+        javabridge.start_vm(run_headless=True)
+    versionDict['find_javahome'] = javabridge.locate.find_javahome()
+    if javabridge.get_env() is not None:
+        javabridge.kill_vm()
+    '''
 
     # canvas app
     canvasVersion = canvas.interface.canvasApp.__version__

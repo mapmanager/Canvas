@@ -346,18 +346,18 @@ class canvasWidget(QtWidgets.QMainWindow):
             'date': dateStr,
             'time': timeStr,
             'seconds': seconds,
-            'xMotor': xMotor,
-            'yMotor': yMotor,
-            'zMotor': zMotor,
-            'xPixels': xPixels,
-            'yPixels': yPixels,
-            'umWidth': umWidth,
-            'umHeight': umHeight,
-            'bitDepth': bitDepth,
-            'xVoxel': umWidth / xPixels,
-            'yVoxel': umHeight / yPixels,
-            'zVoxel': 1,
-            'unit': 'um',
+            'xmotor': xMotor,
+            'ymotor': yMotor,
+            'zmotor': zMotor,
+            'xpixels': xPixels,
+            'ypixels': yPixels,
+            'umwidth': umWidth,
+            'umheight': umHeight,
+            'bitdepth': bitDepth,
+            'xvoxel': umWidth / xPixels,
+            'yvoxel': umHeight / yPixels,
+            'zvoxel': 1,
+            #'unit': 'um',
         }
 
         # create/save/append new stack to backend canvas
@@ -927,10 +927,10 @@ class myQGraphicsView(QtWidgets.QGraphicsView):
         path = canvasStack.path
         fileName = canvasStack.getFileName()
 
-        xMotor = fileDict['xMotor']
-        yMotor = fileDict['yMotor']
-        umWidth = fileDict['umWidth']
-        umHeight = fileDict['umHeight']
+        xMotor = fileDict['xmotor']  # core stack header key -->> lowercase
+        yMotor = fileDict['ymotor']
+        umWidth = fileDict['umwidth']
+        umHeight = fileDict['umheight']
 
         if xMotor is None or yMotor is None:
             logger.error('got bad xMotor/yMotor')
