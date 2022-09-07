@@ -1,0 +1,20 @@
+# backend
+numpy
+pandas
+matplotlib
+tifffile
+scikit-image
+python-bioformats  # includes python-javabridge
+python-javabridge
+
+# frontend
+#pyqt5 does not work with pip install on m1 arm64 mac
+# install manually with 'conda install pyqt'
+# PyQt5
+pyqtgraph
+qdarkstyle
+h5py
+
+pyserial
+opencv-python-headless==4.5.3.56
+#opencv-contrib-python-headless
